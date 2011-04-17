@@ -4,7 +4,7 @@
 
 ARIA=$(which aria2c)
 ARIAOPTIONS="--max-overall-download-limit=90M --file-allocation=none --min-split-size=1M --log-level=notice --remote-time=true"
-DLSCRIPT=/usr/bin/youtube-dl
+DLSCRIPT=$(which youtube-dl)
 
 __exists () {
       which $1 >/dev/null 2>&1;

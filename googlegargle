@@ -22,15 +22,15 @@ if [ ! -f list ] && [ ! -p list ]
    exit 1
 fi
 
-if [ ! -f $ARIA ]
+if [ ! -f "$ARIA" ]
    then
-   echo "The script is looking for $ARIA but it is not there. Fix in the script."
+   echo "The script is looking for ${ARIA:-aria2c} but it is not there. Fix in the script."
    exit 1
 fi
 
-if [ ! -f $DLSCRIPT ]
+if [ ! -f "$DLSCRIPT" ]
    then
-   echo "The script is looking for $DLSCRIPT but it is not there. Fix in the script."
+   echo "The script is looking for ${DLSCRIPT:-youtube-dl} but it is not there. Fix in the script."
    exit 1
 fi
 

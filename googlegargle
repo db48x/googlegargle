@@ -89,11 +89,20 @@ then
 else
     mkdir -- "$id"
     cd -- "$id"
-    __exists wget && getCommand="wget" && getArgs="-O"
-    __exists fetch && getCommand="fetch" && getArgs="-o"
-    $getCommand $getArgs "$id.html" "http://video.google.com/videoplay?docid=$id"
-    grep -- "video-title>" "$id.html" | cut -f2 -d">" | cut -f1 -d"<"
-    $ARIA $ARIAOPTIONS -o $id.flv "$($DLSCRIPT -g http://video.google.com/videoplay?docid=$id)"
+    retry_time=2
+    while true; do
+        (
+            set -e
+            __exists wget && getCommand="wget" && getArgs="-O"
+            __exists fetch && getCommand="fetch" && getArgs="-o"
+            $getCommand $getArgs "$id.html" "http://video.google.com/videoplay?docid=$id"
+            grep -- "video-title>" "$id.html" | cut -f2 -d">" | cut -f1 -d"<"
+            $ARIA $ARIAOPTIONS -o $id.flv "$($DLSCRIPT -g http://video.google.com/videoplay?docid=$id)"
+        ) && break
+        echo "Error while downloading. Will retry in $retry_time seconds."
+        sleep $retry_time
+        retry_time=$(( $retry_time * 2 ))
+    done
 fi
 
 cd $HOMEBASE

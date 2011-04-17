@@ -1,0 +1,94 @@
+#!/bin/sh
+#
+# GOOGLEGARGLE: Given a unique docid as an argument, do your worst.
+
+ARIA=`which aria2c`
+ARIAOPTIONS="--max-overall-download-limit=90M --file-allocation=none --max-connection-per-server=16 --min-split-size=1M --log-level=notice --remote-time=true"
+DLSCRIPT=/home/jscott/GOOGLEGARGLE/youtube-dl
+if [ ! -f $ARIA ] && [ ! -f `which aria2c` ]; then exit 1; fi
+# =================================================
+# Ideally, nothing down here needs screwing with.
+
+# Take me down to sanity check city where the grass is green and girls are pretty
+
+if [ ! -f list ]
+   then
+   echo "Please get a file called list and put it in the same directory as this script."
+   exit 1
+fi
+
+if [ ! -f $ARIA ]
+   then
+   echo "The script is looking for $ARIA but it is not there. Fix in the script."
+   exit 1
+fi
+
+if [ ! -f $DLSCRIPT ]
+   then
+   echo "The script is looking for $DLSCRIPT but it is not there. Fix in the script."
+   exit 1
+fi
+
+HOMEBASE=`pwd`
+
+while read id
+do
+
+# Account for how people shove things at the script.
+
+EQUALS=`echo $id | grep =`
+
+if [ $EQUALS ]
+   then
+   id=`echo $id | cut -f2 -d"="`
+fi
+
+echo $id
+
+SEPDIB=`echo "$id" | sed 's/-//g' | cut -c1`
+SECDIB=`echo "$id" | sed 's/-//g' | cut -c2`
+THIRDIB=`echo "$id" | sed 's/-//g' | cut -c3`
+
+echo "$SEPDIB - $SECDIB - $THIRDIB"
+
+if [ ! -d $SEPDIB ]
+   then
+   echo "First ID for $SEPDIB! Creating."
+   mkdir $SEPDIB
+   cd $SEPDIB
+   else
+   cd $SEPDIB
+fi
+
+if [ ! -d $SECDIB ]
+   then
+   echo "First ID for $SEPDIB/$SECDIB! Creating."
+   mkdir $SECDIB
+   cd $SECDIB
+   else
+   cd $SECDIB
+fi
+
+if [ ! -d $THIRDIB ]
+   then
+   echo "First ID for $SEPDIB/$SECDIB/$THIRDIB! Creating."
+   mkdir $THIRDIB
+   cd $THIRDIB
+   else
+   cd $THIRDIB
+fi
+
+if [ -d "$id" ]
+   then
+   echo "There is already a $id downloaded. Hooray."
+   else
+   mkdir -- "$id"
+   cd -- "$id"
+   wget -O "$id.html" "http://video.google.com/videoplay?docid=$id"
+   grep -- "video-title>" "$id.html" | cut -f2 -d">" | cut -f1 -d"<"
+   $ARIA $ARIAOPTIONS -o $id.flv "`$DLSCRIPT -g http://video.google.com/videoplay?docid=$id`"
+fi
+
+cd $HOMEBASE
+done < "list"
+

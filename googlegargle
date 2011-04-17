@@ -83,7 +83,7 @@ if [ ! -d $THIRDIB ]
    cd $THIRDIB
 fi
 
-if [ -d "$id" ]
+if [ -f "$id/$id.flv" -a ! -f "$id/$id.flv.aria2" ]
 then
     echo "There is already a $id downloaded. Hooray."
 else

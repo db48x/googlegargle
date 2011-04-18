@@ -44,6 +44,8 @@ fi
 
 echo $id
 
+cd $HOMEBASE
+
 SEPDIB=$(echo "$id" | sed 's/-//g' | cut -c1)
 SECDIB=$(echo "$id" | sed 's/-//g' | cut -c2)
 THIRDIB=$(echo "$id" | sed 's/-//g' | cut -c3)
@@ -111,6 +113,5 @@ else
   while read id; do grab_by_id "$id"; done < list
 fi
 
-cd $HOMEBASE
 
 

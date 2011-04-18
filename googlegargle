@@ -17,12 +17,6 @@ if [ ! -f $ARIA ] && [ ! -f $(which aria2c) ]; then exit 1; fi
 
 # Take me down to sanity check city where the grass is green and girls are pretty
 
-if [ ! -f list ] && [ ! -p list ]
-   then
-   echo "Please get a file called list and put it in the same directory as this script."
-   exit 1
-fi
-
 if [ ! -f "$ARIA" ]
    then
    echo "The script is looking for ${ARIA:-aria2c} but it is not there. Fix in the script."
@@ -37,8 +31,10 @@ fi
 
 HOMEBASE=$(pwd)
 
-while read id
-do
+grab_by_id() {
+id=$1
+
+cd $HOMEBASE
 
 # Account for how people shove things at the script.
 
@@ -50,6 +46,8 @@ if [ $EQUALS ]
 fi
 
 echo $id
+
+cd $HOMEBASE
 
 SEPDIB=$(echo "$id" | sed 's/-//g' | cut -c1)
 SECDIB=$(echo "$id" | sed 's/-//g' | cut -c2)
@@ -90,22 +88,37 @@ then
 else
     [ -d "$id" ] && echo "Resuming $id." || mkdir -- "$id"
     cd -- "$id"
+    __exists wget && getCommand="wget" && getArgs="-O"
+    __exists fetch && getCommand="fetch" && getArgs="-o"
     retry_time=2
     while true; do
         (
-            set -e
-            __exists wget && getCommand="wget" && getArgs="-O"
-            __exists fetch && getCommand="fetch" && getArgs="-o"
-            $getCommand $getArgs "$id.html" "http://video.google.com/videoplay?docid=$id"
+            $getCommand $getArgs "$id.html" "http://video.google.com/videoplay?docid=$id" || exit $?
             grep -- "video-title>" "$id.html" | cut -f2 -d">" | cut -f1 -d"<"
-            $ARIA $ARIAOPTIONS -o $id.flv "$($DLSCRIPT -g http://video.google.com/videoplay?docid=$id)"
+            $ARIA $ARIAOPTIONS -o $id.flv "$($DLSCRIPT -g http://video.google.com/videoplay?docid=$id)"  || exit $?
         ) && break
+	if [ $retry_time -gt 600 ]; then
+	  echo "Too many errors on $id, giving up on this one."
+	  echo "$id" >> $HOMEBASE/failed.list
+	  break
+	fi
         echo "Error while downloading. Will retry in $retry_time seconds."
         sleep $retry_time
         retry_time=$(( $retry_time * 2 ))
     done
 fi
+}
 
-cd $HOMEBASE
-done < "list"
+if [ -n "$1" ];then 
+  for id in "$@"; do grab_by_id "$id"; done
+else
+  if [ ! -f list ] && [ ! -p list ]
+    then
+    echo "Please get a file called list and put it in the same directory as this script."
+    exit 1
+  fi
+  while read id; do grab_by_id "$id"; done < list
+fi
+
+
 

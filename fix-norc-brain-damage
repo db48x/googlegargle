@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+# Some versions of the googlegargle script as patched by norc created
+# a messy, deeply-nested directory structure. Running this script in a
+# download directory where that has happened will clean things up. If
+# there's nothing to clean up, the script does nothing.
+
+set -eu
+find . -path '?/?/?/*/?/?/?/*/*.flv' | while read nested_flv_name; do
+    [ -f "$nested_flv_name" ] || continue
+    nested_flv_dir=$(dirname "$nested_flv_name")
+    echo "Fixing $nested_flv_dir"
+    incorrect_prefix=$(dirname $(dirname $(dirname $(dirname $nested_flv_dir))))/
+    corrected_flv_dir="./${nested_flv_dir/$incorrect_prefix}"
+    mkdir -p "$corrected_flv_dir"
+    for f in $nested_flv_dir/*; do
+        [ -f "$f" ] && mv "$f" "$corrected_flv_dir"
+    done
+    maybe_empty_dir=$(dirname "$nested_flv_name")
+    while rmdir "$maybe_empty_dir" 2>/dev/null; do
+        maybe_empty_dir=$(dirname "$maybe_empty_dir")
+    done
+done

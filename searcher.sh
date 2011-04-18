@@ -40,37 +40,34 @@ if [ $# -lt 1 ]; then
     exit 2
 fi
 
-
 SEARCH=`echo "$@" | tr ' ' '+'`
 # Select which lengths of video you want
 ##
 # Subsequently return all the videos in one, sorted, deduped list of ID's
-# 
+#
 BASENAME='seed_videos_'
 OUTNAME='_dedupe'
 NAME=$BASENAME$SEARCH
 OUT=$NAME$OUTNAME
 
 searching () {
-for i in `seq 0 10 990 `
-do curl -A "AT, Bitches" "http://www.google.com/search?q=$SEARCH+site:video.google.com&hl=en&safe=off&tbs=dur:$1&tbm=vid&start=$i&sa=N"|grep -o "docid=[0-9-]*"|tee -a "$BASENAME$SEARCH"
-done
+  for i in `seq 0 10 990 `; do
+    url="http://www.google.com/search?q=$2+site:video.google.com&hl=en&safe=off&tbs=dur:$1&tbm=vid&start=$i&sa=N"
+    curl -A "AT, Bitches" $url | grep -o "docid=[0-9-]*" | tee -a "$BASENAME$2"
+  done
 }
 
-if [ $SEARCH_LONG = 'y' ];
-	then
-	searching "l"
+if [ $SEARCH_LONG = 'y' ]; then
+  searching "l" "$SEARCH"
 fi
-if [ $SEARCH_MED = 'y' ];
-        then
-        searching "m"
+
+if [ $SEARCH_MED = 'y' ]; then
+  searching "m" "$SEARCH"
 fi
-if [ $SEARCH_SHORT = 'y' ];
-        then
-        searching "s"
+if [ $SEARCH_SHORT = 'y' ]; then
+  searching "s" "$SEARCH"
 fi
 
 sort $NAME | uniq -u | tee $OUT
-SEARCHCOUNT=$(cat $OUT | wc -l) 
+SEARCHCOUNT=$(cat $OUT | wc -l)
 echo "Search term '$SEARCH' returned $SEARCHCOUNT deduped results."
-

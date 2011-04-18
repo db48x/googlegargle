@@ -10,6 +10,20 @@ __exists () {
       which $1 >/dev/null 2>&1;
 }
 
+LIST=list
+while getopts :f: OPT; do
+    case $OPT in
+	f|+f)
+	    LIST="$OPTARG"
+	    ;;
+	*)
+	    echo "usage: `basename $0` [+-f ARG} [--] ARGS..."
+	    exit 2
+    esac
+done
+shift `expr $OPTIND - 1`
+OPTIND=1
+
 if [ ! -f $ARIA ] && [ ! -f $(which aria2c) ]; then exit 1; fi
 # =================================================
 # Ideally, nothing down here needs screwing with.
@@ -111,12 +125,12 @@ fi
 if [ -n "$1" ];then 
   for id in "$@"; do grab_by_id "$id"; done
 else
-  if [ ! -f list ] && [ ! -p list ]
+  if [ ! -f "$LIST" ] && [ ! -p "$LIST" ]
     then
-    echo "Please get a file called list and put it in the same directory as this script."
+    echo "Please get a file called $LIST and put it in the same directory as this script."
     exit 1
   fi
-  while read id; do grab_by_id "$id"; done < list
+  while read id; do grab_by_id "$id"; done < "$LIST"
 fi
 
 

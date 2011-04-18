@@ -3,7 +3,7 @@
 # GOOGLEGARGLE: Given a unique docid as an argument, do your worst.
 
 ARIA=$(which aria2c)
-ARIAOPTIONS="--max-overall-download-limit=90M --file-allocation=none --min-split-size=1M --log-level=notice --remote-time=true"
+ARIAOPTIONS="--max-overall-download-limit=90M --file-allocation=none --min-split-size=1M --log-level=notice --remote-time=true --max-file-not-found=1"
 DLSCRIPT=$(which youtube-dl)
 
 __exists () {

@@ -16,12 +16,6 @@ if [ ! -f $ARIA ] && [ ! -f $(which aria2c) ]; then exit 1; fi
 
 # Take me down to sanity check city where the grass is green and girls are pretty
 
-if [ ! -f list ] && [ ! -p list ]
-   then
-   echo "Please get a file called list and put it in the same directory as this script."
-   exit 1
-fi
-
 if [ ! -f "$ARIA" ]
    then
    echo "The script is looking for ${ARIA:-aria2c} but it is not there. Fix in the script."
@@ -36,8 +30,8 @@ fi
 
 HOMEBASE=$(pwd)
 
-while read id
-do
+grab_by_id() {
+id=$1
 
 # Account for how people shove things at the script.
 
@@ -104,7 +98,19 @@ else
         retry_time=$(( $retry_time * 2 ))
     done
 fi
+}
+
+if [ -n "$1" ];then 
+  for id in "$@"; do grab_by_id "$id"; done
+else
+  if [ ! -f list ] && [ ! -p list ]
+    then
+    echo "Please get a file called list and put it in the same directory as this script."
+    exit 1
+  fi
+  while read id; do grab_by_id "$id"; done < list
+fi
 
 cd $HOMEBASE
-done < "list"
+
 

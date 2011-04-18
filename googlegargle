@@ -3,7 +3,7 @@
 # GOOGLEGARGLE: Given a unique docid as an argument, do your worst.
 
 ARIA=$(which aria2c)
-ARIAOPTIONS="--max-overall-download-limit=90M --file-allocation=none --min-split-size=1M --log-level=notice --remote-time=true --max-file-not-found=1"
+ARIAOPTIONS="--max-overall-download-limit=90M --file-allocation=none --min-split-size=1M --log-level=notice --remote-time=true"
 DLSCRIPT=$(which youtube-dl)
 
 __exists () {
@@ -32,6 +32,8 @@ HOMEBASE=$(pwd)
 
 grab_by_id() {
 id=$1
+
+cd $HOMEBASE
 
 # Account for how people shove things at the script.
 
@@ -85,16 +87,20 @@ then
 else
     [ -d "$id" ] && echo "Resuming $id." || mkdir -- "$id"
     cd -- "$id"
+    __exists wget && getCommand="wget" && getArgs="-O"
+    __exists fetch && getCommand="fetch" && getArgs="-o"
     retry_time=2
     while true; do
         (
-            set -e
-            __exists wget && getCommand="wget" && getArgs="-O"
-            __exists fetch && getCommand="fetch" && getArgs="-o"
-            $getCommand $getArgs "$id.html" "http://video.google.com/videoplay?docid=$id"
+            $getCommand $getArgs "$id.html" "http://video.google.com/videoplay?docid=$id" || exit $?
             grep -- "video-title>" "$id.html" | cut -f2 -d">" | cut -f1 -d"<"
-            $ARIA $ARIAOPTIONS -o $id.flv "$($DLSCRIPT -g http://video.google.com/videoplay?docid=$id)"
+            $ARIA $ARIAOPTIONS -o $id.flv "$($DLSCRIPT -g http://video.google.com/videoplay?docid=$id)"  || exit $?
         ) && break
+	if [ $retry_time -gt 600 ]; then
+	  echo "Too many errors on $id, giving up on this one."
+	  echo "$id" >> $HOMEBASE/failed.list
+	  break
+	fi
         echo "Error while downloading. Will retry in $retry_time seconds."
         sleep $retry_time
         retry_time=$(( $retry_time * 2 ))

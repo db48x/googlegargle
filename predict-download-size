@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+#
+# Calculate the total expected download size of a set of videos,
+# reading IDs from stdin.
+#
+# Slow, but faster than downloading until you run out of disk space :-)
+#
+set -eu
+set -o pipefail
+DLSCRIPT=$(which youtube-dl)
+if [ ! -f "$DLSCRIPT" ]
+   then
+   echo "The script is looking for ${DLSCRIPT:-youtube-dl} but it is not there. Fix in the script."
+   exit 1
+fi
+
+echo_size() {
+    echo "$1: $(( $2 / 1024 / 1024 ))M"
+}
+
+sumfile=$(mktemp)
+trap "rm $sumfile" 0
+
+echo 0 > sumfile
+error_count=0
+while read id; do
+    if echo $id | grep = > /dev/null
+    then
+        id=$(echo $id | cut -f2 -d"=")
+    fi
+    
+    url=$($DLSCRIPT -g http://video.google.com/videoplay?docid=$id)
+    content_length=$(curl --silent --location --head "$url" | sed -n 's/\r//; s/Content-Length: //p')
+    if [ -n "$content_length" ]; then
+        echo_size "$id" "$content_length"
+        echo "$content_length +" >> sumfile
+    else
+        echo "$id: Error"
+        error_count=$(( $error_count + 1 ))
+    fi
+done
+echo p >> sumfile
+echo_size "Total" "$(dc < sumfile)"
+echo "Errors: $error_count"

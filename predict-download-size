@@ -51,7 +51,7 @@ else
     sizedir=$(mktemp -d)
     sumfile=$(mktemp)
     echo 0 > sumfile
-    trap "rm -rvf $sizedir $sumfile" 0
+    trap "rm -rf $sizedir $sumfile" 0
 
     # tune this for best performance
     slave_count=15

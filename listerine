@@ -1,0 +1,34 @@
+#!/bin/bash
+#./listerine - a companion to the google gargle project
+#relies on googlegrape, aria2c, curl, and youtube-dl
+
+#ALPHANUMERIC ONLY!
+
+USERNAME=norc
+EXTERN_IP=`curl icanhazip.com` #Do not change without good reason, or underscor will eat your brains
+SERVER=199.48.254.90:8081
+
+curl -s http://$SERVER/introduce/$USERNAME/$EXTERN_IP
+echo ""
+while true
+do
+	echo "Getting an id from $SERVER, authenticated as $USERNAME with IP $EXTERN_IP"
+	id=`curl http://$SERVER/getID/$USERNAME`
+
+	echo ID is $id
+	./googlegargle "$id"
+
+	SEPDIB=$(echo "$id" | sed 's/-//g' | cut -c1)
+	SECDIB=$(echo "$id" | sed 's/-//g' | cut -c2)
+	THIRDIB=$(echo "$id" | sed 's/-//g' | cut -c3)
+	hash=`sha1sum "$SEPDIB/$SECDIB/$THIRDIB/$id/$id.flv"|awk '{print $1}'`
+	size=`du -b "$SEPDIB/$SECDIB/$THIRDIB/$id/$id.flv"|awk '{print $1}'`
+	echo "Hash is $hash"
+	echo "ID is $id"
+	echo "USERNAME is $USERNAME"
+	echo "Size is $size"
+	piece1="$USERNAME/$id/$size"
+	piece2="/$hash"
+	echo $piece1$piece2
+	curl "http://$SERVER/finishVid/$USERNAME/$id/$size/$hash"
+done

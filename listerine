@@ -12,7 +12,7 @@ echo ""
 while true
 do
 	echo "Getting an id from $SERVER, authenticated as $USERNAME with IP $EXTERN_IP"
-	id=`curl http://$SERVER/getID/$USERNAME`
+	id=`curl http://$SERVER/getID/$USERNAME | sed "s/[^0-9\\-]//g"`
 
 	echo ID is $id
 	./googlegargle -- "$id"

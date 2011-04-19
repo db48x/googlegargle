@@ -7,7 +7,8 @@ SEARCH_LONG='y'
 SEARCH_MED='y'
 SEARCH_SHORT='n'
 
-while getopts :lms OPT; do
+while getopts lms OPT; do
+echo $OPT
     case $OPT in
 	+l)
 	    SEARCH_LONG=y
@@ -28,7 +29,7 @@ while getopts :lms OPT; do
 	    SEARCH_SHORT=n
 	    ;;
 	*)
-	    echo "usage: `basename $0` [+-lms} [--] ARGS..."
+	    echo "usage: `basename $0` [+-lms] [--] ARGS..."
 	    exit 2
     esac
 done
@@ -40,37 +41,47 @@ if [ $# -lt 1 ]; then
     exit 2
 fi
 
-
-SEARCH=`echo "$@" | tr ' ' '+'`
-# Select which lengths of video you want
-##
-# Subsequently return all the videos in one, sorted, deduped list of ID's
-# 
-BASENAME='seed_videos_'
-OUTNAME='_dedupe'
-NAME=$BASENAME$SEARCH
-OUT=$NAME$OUTNAME
-
 searching () {
-for i in `seq 0 10 990 `
-do curl -A "AT, Bitches" "http://www.google.com/search?q=$SEARCH+site:video.google.com&hl=en&safe=off&tbs=dur:$1&tbm=vid&start=$i&sa=N"|grep -o "docid=[0-9-]*"|tee -a "$BASENAME$SEARCH"
-done
+  for i in `seq 0 10 990 `; do
+    url="http://www.google.com/search?q=$2+site:video.google.com&hl=en&safe=off&tbs=dur:$1&tbm=vid&start=$i&sa=N"
+    curl --silent -A "AT, Bitches" $url | grep -o "docid=[0-9-]*" > "$BASENAME$2"
+  done
 }
 
-if [ $SEARCH_LONG = 'y' ];
-	then
-	searching "l"
-fi
-if [ $SEARCH_MED = 'y' ];
-        then
-        searching "m"
-fi
-if [ $SEARCH_SHORT = 'y' ];
-        then
-        searching "s"
-fi
+search () {
+  SEARCH=`echo "$@" | tr ' ' '+'`
+  echo "Searching for term '$SEARCH'..."
 
-sort $NAME | uniq -u | tee $OUT
-SEARCHCOUNT=$(cat $OUT | wc -l) 
-echo "Search term '$SEARCH' returned $SEARCHCOUNT deduped results."
+  # Select which lengths of video you want
+  ##
+  # Subsequently return all the videos in one, sorted, deduped list of ID's
+  #
+  BASENAME='seed_videos_'
+  OUTNAME='_dedupe'
+  NAME=$BASENAME$SEARCH
+  OUT=$NAME$OUTNAME
+  
+  if [ $SEARCH_LONG = 'y' ]; then
+    searching "l" "$SEARCH"
+  fi
+  
+  if [ $SEARCH_MED = 'y' ]; then
+    searching "m" "$SEARCH"
+  fi
+  if [ $SEARCH_SHORT = 'y' ]; then
+    searching "s" "$SEARCH"
+  fi
+  
+  sort $NAME | uniq -u | tee $OUT
+  SEARCHCOUNT=$(cat $OUT | wc -l)
+  echo "Search term '$SEARCH' returned $SEARCHCOUNT deduped results."
+}
 
+rest=$*
+if [ ${rest:0:1} == "@" ]; then
+  cat ${rest:1} | while read terms; do
+    search $terms
+  done
+else
+  search $@
+fi

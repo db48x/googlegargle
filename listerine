@@ -2,9 +2,8 @@
 #./listerine - a companion to the google gargle project
 #relies on googlegrape, aria2c, curl, and youtube-dl
 
-#ALPHANUMERIC ONLY!
-
-USERNAME=norc
+# Change the username below to something unique to you. ALPHANUMERIC ONLY!
+USERNAME=change-me-or-die
 EXTERN_IP=`curl icanhazip.com` #Do not change without good reason, or underscor will eat your brains
 SERVER=199.48.254.90:8081
 

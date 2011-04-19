@@ -78,8 +78,6 @@ search () {
 }
 
 rest=$*
-echo $rest
-exit
 if [ ${rest:0:1} == "@" ]; then
   cat ${rest:1} | while read terms; do
     search $terms

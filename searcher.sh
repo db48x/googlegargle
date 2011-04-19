@@ -72,7 +72,7 @@ search () {
     searching "s" "$SEARCH"
   fi
   
-  sort $NAME | uniq -u | tee $OUT
+  sort -u $NAME | tee $OUT
   SEARCHCOUNT=$(cat $OUT | wc -l)
   echo "Search term '$SEARCH' returned $SEARCHCOUNT deduped results."
 }

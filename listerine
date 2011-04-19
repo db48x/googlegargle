@@ -16,7 +16,7 @@ do
 	id=`curl http://$SERVER/getID/$USERNAME`
 
 	echo ID is $id
-	./googlegargle "$id"
+	./googlegargle -- "$id"
 
 	SEPDIB=$(echo "$id" | sed 's/-//g' | cut -c1)
 	SECDIB=$(echo "$id" | sed 's/-//g' | cut -c2)

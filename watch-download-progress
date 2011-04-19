@@ -1,0 +1,52 @@
+#!/bin/bash
+set -eu
+if [ -z "${1:-}" -o -n "${2:-}" ] ; then
+    echo "usage: $0 <poll time in seconds>"
+    echo
+    echo "Run this is a download directory where googlegargle/listerine is operating."
+    echo "Prints status updates and tries to stop listerine in case of dangerously low disk space."
+    exit 1
+fi
+interval=$1
+
+# The following might need tuning for non-GNU df(1)s
+df_filter() {
+    sed 's/  */\t/g' | cut -f 4
+}
+
+case $(df -P . | df_filter | head -n1) in
+    Available)
+        # Okay, we picked the right column from the output
+        ;;
+    *)
+        echo "Sorry, I don't know how to parse the output of your df command. Please try to fix me..."
+        exit 1
+        ;;
+esac
+
+free_space_threshold_kb=$(( 500 * 1024 ))
+
+size=0
+time=0
+while true
+do
+    previous_size=$size
+    previous_time=$time
+    size=$(du -kc ? | tail -n1 | cut -f1)
+    time=$(date +%s)
+    echo -n "Have $(( $size / 1024 ))M"
+    echo -n " in $(find . -name '*flv' | wc -l) files,"
+    echo -n " growing at $(( $(( $size - $previous_size )) / $(( $time - $previous_time )) )) k/s."
+    free_space=$(df -Pk . | df_filter | tail -n1)
+    echo -n " ${free_space}k of disk space left."
+    if [ -f STOP ]; then
+        echo " STOP file exists."
+    else
+        echo
+        if [ $free_space -lt $free_space_threshold_kb ]; then
+            echo "Running out of disk space! Creating STOP file to warn listerine."
+            touch STOP
+        fi
+    fi
+    sleep $interval
+done

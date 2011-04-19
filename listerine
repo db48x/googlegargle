@@ -30,4 +30,8 @@ do
 	piece2="/$hash"
 	echo $piece1$piece2
 	curl "http://$SERVER/finishVid/$USERNAME/$id/$size/$hash"
+        if [ -f STOP ]; then 
+		echo "I see a file called STOP. Stopping."
+		exit 0
+	fi
 done

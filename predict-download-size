@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+#
+# Calculate the total expected download size of a set of videos,
+# reading IDs from stdin.
+#
+set -eu
+set -o pipefail
+DLSCRIPT=$(which youtube-dl)
+if [ ! -f "$DLSCRIPT" ]
+   then
+   echo "The script is looking for ${DLSCRIPT:-youtube-dl} but it is not there. Fix in the script."
+   exit 1
+fi
+
+echo_size() {
+    echo "$1: $(( $2 / 1024 / 1024 ))M"
+}
+
+slave_output_dir="${1:-}"
+
+if [ -n "$slave_output_dir" ]; then
+    if ! [ -d "$slave_output_dir" ]; then
+        echo "Error: You should run this script with no arguments, feed it a video list on stdin." >&2
+        exit 1
+    fi
+    # We're a slave process
+    shift
+    for id in "$@"; do
+        if echo $id | grep = > /dev/null
+        then
+            id=$(echo $id | cut -f2 -d"=")
+        fi
+        outputfile="$slave_output_dir/$id"
+        if [ -f "$outputfile" ]; then
+            echo "DUP: $id" >&2
+        else
+            url=$($DLSCRIPT -g http://video.google.com/videoplay?docid=$id)
+            content_length=$(curl --silent --location --head "$url" | sed -n 's/\r//; s/Content-Length: //p')
+            echo "$content_length" > "${outputfile}.tmp.$$"
+            mv "${outputfile}.tmp.$$" "$outputfile"
+            if [ -n "$content_length" ]; then
+                echo "OK:  $id" >&2
+            else
+                echo "ERR: $id" >&2
+            fi
+        fi
+    done
+else
+    # We are the master
+    # make a directory for our slaves to write into
+    sizedir=$(mktemp -d)
+    sumfile=$(mktemp)
+    echo 0 > sumfile
+    trap "rm -rf $sizedir $sumfile" 0
+
+    # tune this for best performance
+    slave_count=15
+    
+    # read arguments from stdin, distribute them to slaves
+    xargs -P$slave_count -n5 "$0" $sizedir
+
+    # slaves are done, add it all up
+    error_count=0
+    for sizefile in $sizedir/*; do
+        id=$(basename $sizefile)
+        content_length=$(cat $sizefile)
+        if [ -n "$content_length" ]; then
+            echo_size "$id" "$content_length"
+            echo "$content_length +" >> sumfile
+        else
+            echo "$id: Error"
+            error_count=$(( $error_count + 1 ))
+        fi
+    done
+    echo p >> sumfile
+    echo_size "Total" "$(dc < sumfile)"
+    echo "Errors: $error_count"
+fi

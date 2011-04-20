@@ -82,5 +82,5 @@ if [ ${rest:0:1} == "@" ]; then
     search $terms
   done
 else
-  search $@
+  search $rest
 fi

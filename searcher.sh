@@ -42,6 +42,7 @@ if [ $# -lt 1 ]; then
 fi
 
 searching () {
+  rm -f "$BASENAME$2"
   for i in `seq 0 10 990 `; do
       curl --silent -A "AT, Bitches" "http://www.google.com/search?q=$2+site:video.google.com&hl=en&safe=off&tbs=dur:$1&tbm=vid&start=$i&sa=N" | grep -o "docid=[0-9-]*" | tee -a "$BASENAME$2"
   done

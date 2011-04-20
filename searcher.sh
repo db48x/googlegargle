@@ -8,7 +8,6 @@ SEARCH_MED='y'
 SEARCH_SHORT='n'
 
 while getopts lms OPT; do
-echo $OPT
     case $OPT in
 	+l)
 	    SEARCH_LONG=y

@@ -3,9 +3,15 @@
 #relies on googlegrape, aria2c, curl, and youtube-dl
 
 # Change the username below to something unique to you. ALPHANUMERIC ONLY!
-USERNAME=change-me-or-die
-EXTERN_IP=`curl ipv4.icanhazip.com` #Do not change without good reason, or underscor will eat your brains
+USERNAME=
 SERVER=199.48.254.90:8081
+
+if [ -z $USERNAME ]; then
+    echo "You must edit the listerine script and add a username before you can begin"
+    exit 1
+fi
+
+EXTERN_IP=`curl --silent ipv4.icanhazip.com` #Do not change without good reason, or underscor will eat your brains
 
 curl -s http://$SERVER/introduce/$USERNAME/$EXTERN_IP
 echo ""

@@ -43,8 +43,7 @@ fi
 
 searching () {
   for i in `seq 0 10 990 `; do
-    url="http://www.google.com/search?q=$2+site:video.google.com&hl=en&safe=off&tbs=dur:$1&tbm=vid&start=$i&sa=N"
-    curl --silent -A "AT, Bitches" $url | grep -o "docid=[0-9-]*" > "$BASENAME$2"
+      curl --silent -A "AT, Bitches" "http://www.google.com/search?q=$2+site:video.google.com&hl=en&safe=off&tbs=dur:$1&tbm=vid&start=$i&sa=N" | grep -o "docid=[0-9-]*" | tee -a "$BASENAME$2"
   done
 }
 

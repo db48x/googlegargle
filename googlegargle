@@ -46,6 +46,18 @@ HOMEBASE=$(pwd)
 __exists wget && getCommand="wget" && getArgs="-O"
 __exists fetch && getCommand="fetch" && getArgs="-o"
 
+require() {
+  $* || exit $?
+}
+
+grab() {
+  require $getCommand $getArgs $*
+}
+
+aria() {
+  require $ARIA $ARIAOPTIONS -o $*
+}
+
 grab_by_id() {
   id=$1
   
@@ -59,8 +71,6 @@ grab_by_id() {
      then
      id=$(echo $id | cut -f2 -d"=")
   fi
-  
-  echo $id
   
   cd $HOMEBASE
   
@@ -105,15 +115,18 @@ grab_by_id() {
     cd -- "$id"
     retry_time=2
     while true; do
-      ($getCommand $getArgs "$id.html" "http://video.google.com/videoplay?docid=$id" || exit $?
+      (grab "$id.html" "http://video.google.com/videoplay?docid=$id"
        grep -- "video-title>" "$id.html" | cut -f2 -d">" | cut -f1 -d"<"
-       $ARIA $ARIAOPTIONS -o $id.flv "$($DLSCRIPT -g http://video.google.com/videoplay?docid=$id)" || exit $?
-       $getCommand $getArgs "$id.xml" "http://video.google.com/videotranscript?docid=$id&type=list"
-       cat "$id.xml" | tr ">" "\n" | grep "$<track " | while read $line; do
+       aria $id.flv "$($DLSCRIPT -g http://video.google.com/videoplay?docid=$id)"
+       grab "$id.xml" "http://video.google.com/videotranscript?docid=$id&type=list"
+       cat -- "$id.xml" | tr ">" "\n" | grep "$<track " | while read line; do
+         echo $line
          tid=`echo $line | sed -n -e 's/.*id="\([^"]*\)".*/\1/p'`
          name=`echo $line | sed -n -e 's/.*name="\([^"]*\)".*/\1/p'`
          lang=`echo $line | sed -n -e 's/.*lang_code="\([^"]*\)".*/\1/p'`
-         $getCommand $getArgs "$id.$tid.xml" "http://video.google.com/videotranscript?docid=$id&type=track&name=$name&lang=$lang"
+         lang_name=`echo $line | sed -n -e 's/.*lang_original="\([^"]*\)".*/\1/p'`
+         echo "Found $lang_name subtitle track $tid named $name"
+         grab "$id.$tid.xml" "http://video.google.com/videotranscript?docid=$id&type=track&name=$name&lang=$lang"
        done) && break
       if [ $retry_time -gt 32 ]; then
         echo "Too many errors on $id, giving up on this one."

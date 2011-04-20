@@ -5,10 +5,16 @@
 # Change the username below to something unique to you. ALPHANUMERIC ONLY!
 USERNAME=
 SERVER=199.48.254.90:8081
+GARGLE=./googlegargle
 
 if [ -z $USERNAME ]; then
     echo "You must edit the listerine script and add a username before you can begin"
     exit 1
+fi
+
+if [ ! -f $GARGLE ]; then
+    echo "Couldn't find googlegargle. Are you sure you cloned everything from the git repository?"
+    exit 2
 fi
 
 EXTERN_IP=`curl --silent ipv4.icanhazip.com` #Do not change without good reason, or underscor will eat your brains
@@ -18,10 +24,10 @@ echo ""
 while true
 do
 	echo "Getting an id from $SERVER, authenticated as $USERNAME with IP $EXTERN_IP"
-	id=`curl http://$SERVER/getID/$USERNAME | sed "s/[^0-9\\-]//g"`
+	id=`curl --silent http://$SERVER/getID/$USERNAME | sed "s/[^0-9\\-]//g"`
 
 	echo ID is $id
-	./googlegargle -- "$id"
+	$GARGLE -- "$id"
 
 	SEPDIB=$(echo "$id" | sed 's/-//g' | cut -c1)
 	SECDIB=$(echo "$id" | sed 's/-//g' | cut -c2)
@@ -32,9 +38,6 @@ do
 	echo "ID is $id"
 	echo "USERNAME is $USERNAME"
 	echo "Size is $size"
-	piece1="$USERNAME/$id/$size"
-	piece2="/$hash"
-	echo $piece1$piece2
 	curl "http://$SERVER/finishVid/$USERNAME/$id/$size/$hash"
         if [ -f STOP ]; then 
 		echo "I see a file called STOP. Stopping."

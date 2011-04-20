@@ -36,14 +36,19 @@ do
     time=$(date +%s)
     echo -n "Have $(( $size / 1024 ))M"
     echo -n " in $(find . -name '*flv' | wc -l) files,"
-    echo -n " growing at $(( $(( $size - $previous_size )) / $(( $time - $previous_time )) )) k/s."
-    free_space=$(df -Pk . | df_filter | tail -n1)
-    echo -n " ${free_space}k of disk space left."
+    kbps=$(( $(( $size - $previous_size )) / $(( $time - $previous_time )) ))
+    echo -n " growing at ${kbps}k/s."
+    free_space_kb=$(df -Pk . | df_filter | tail -n1)
+    echo -n " $(( ${free_space_kb} / 1024 ))M of free space"
+    if [ $kbps -gt 0 ]; then 
+        echo -n ", will last until $(date -d @$(( $(date +%s) + $free_space_kb / $kbps )))"
+    fi
+    echo -n .
     if [ -f STOP ]; then
         echo " STOP file exists."
     else
         echo
-        if [ $free_space -lt $free_space_threshold_kb ]; then
+        if [ $free_space_kb -lt $free_space_threshold_kb ]; then
             echo "Running out of disk space! Creating STOP file to warn listerine."
             touch STOP
         fi

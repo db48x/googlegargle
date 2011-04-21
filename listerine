@@ -37,7 +37,7 @@ EXTERN_IP=`curl --silent ipv4.icanhazip.com` #Do not change without good reason,
 
 askserver() {
   rest="$@" | tr " " "/"
-  curl --silent "http://$SERVER/$1/$USERNAME/$rest"
+  curl --silent --fail "http://$SERVER/$1/$USERNAME/$rest"
   if [ $? ]; then
     error "Couldn't contact the listerine server. The listerine server could be down, or your network."
   fi

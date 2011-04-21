@@ -49,9 +49,12 @@ askserver introduce $EXTERN_IP
 
 while true; do
   echo "Getting an id from $SERVER, authenticated as $USERNAME with IP $EXTERN_IP"
-  id=`askserver getID | sed "s/[^0-9\\-]//g"`
-  if [ -z $id ]; then
+  id=`askserver getID`
+  if [ $? ]; then
     error "The server didn't give us an id. This could mean the server is broken, or possibly that we're finished."
+  fi
+  if [ $(echo $id | grep "^[-0-9]*$") != $id ]; then
+    error "The server did not return a valid id. It said: $id"
   fi
 
   echo ID is $id

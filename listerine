@@ -2,10 +2,19 @@
 #./listerine - a companion to the google gargle project
 #relies on googlegrape, aria2c, curl, and youtube-dl
 
-# Change the username below to something unique to you. ALPHANUMERIC ONLY!
-USERNAME=
 SERVER=199.48.254.90:8081
 GARGLE=./googlegargle
+
+while getopts :u: OPT; do
+    case $OPT in
+	u)
+	    USERNAME="$OPTARG"
+	    ;;
+	*)
+	    echo "usage: `basename $0` [-u USERNAME]"
+            exit 1;
+    esac
+done
 
 warning() {
   echo "$0: $*" >&2
@@ -13,11 +22,11 @@ warning() {
 
 error() {
   echo "$0: $*" >&2
-  exit 1
+  exit 2
 }
 
 if [ -z $USERNAME ]; then
-    error "You must edit the listerine script and add a username before you can begin"
+    error "You must supply a username with the -u option before you can begin"
 fi
 
 if [ ! -f $GARGLE ]; then

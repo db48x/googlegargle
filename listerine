@@ -7,40 +7,62 @@ USERNAME=
 SERVER=199.48.254.90:8081
 GARGLE=./googlegargle
 
+warning() {
+  echo "$0: $*" >&2
+}
+
+error() {
+  echo "$0: $*" >&2
+  exit 1
+}
+
 if [ -z $USERNAME ]; then
-    echo "$0: You must edit the listerine script and add a username before you can begin">&2
-    exit 1
+    error "You must edit the listerine script and add a username before you can begin"
 fi
 
 if [ ! -f $GARGLE ]; then
-    echo "$0: Couldn't find googlegargle. Are you sure you cloned everything from the git repository?">&2
-    exit 2
+    error "Couldn't find googlegargle. Are you sure you cloned everything from the git repository?"
 fi
 
 EXTERN_IP=`curl --silent ipv4.icanhazip.com` #Do not change without good reason, or underscor will eat your brains
 
-curl -s http://$SERVER/introduce/$USERNAME/$EXTERN_IP
-echo ""
-while true
-do
-	echo "Getting an id from $SERVER, authenticated as $USERNAME with IP $EXTERN_IP"
-	id=`curl --silent http://$SERVER/getID/$USERNAME | sed "s/[^0-9\\-]//g"`
+askserver() {
+  rest="$@" | tr " " "/"
+  curl --silent "http://$SERVER/$1/$USERNAME/$rest"
+  if [ $? ]; then
+    error "Couldn't contact the listerine server. Is your network down?"
+  fi
+}
 
-	echo ID is $id
-	$GARGLE -- "$id"
+askserver introduce $EXTERN_IP
 
-	SEPDIB=$(echo "$id" | sed 's/-//g' | cut -c1)
-	SECDIB=$(echo "$id" | sed 's/-//g' | cut -c2)
-	THIRDIB=$(echo "$id" | sed 's/-//g' | cut -c3)
-	hash=`sha1sum "$SEPDIB/$SECDIB/$THIRDIB/$id/$id.flv"|awk '{print $1}'`
-	size=`du -b "$SEPDIB/$SECDIB/$THIRDIB/$id/$id.flv"|awk '{print $1}'`
-	echo "Hash is $hash"
-	echo "ID is $id"
-	echo "USERNAME is $USERNAME"
-	echo "Size is $size"
-	curl "http://$SERVER/finishVid/$USERNAME/$id/$size/$hash"
-        if [ -f STOP ]; then 
-		echo "I see a file called STOP. Stopping."
-		exit 0
-	fi
+while true; do
+  echo "Getting an id from $SERVER, authenticated as $USERNAME with IP $EXTERN_IP"
+  id=`askserver getID | sed "s/[^0-9\\-]//g"`
+  if [ -z $id ]; then
+    error "The server didn't give us an id. This could mean the server is broken, or possibly that we're finished."
+  fi
+
+  echo ID is $id
+  $GARGLE -- "$id"
+
+  SEPDIB=$(echo "$id" | sed 's/-//g' | cut -c1)
+  SECDIB=$(echo "$id" | sed 's/-//g' | cut -c2)
+  THIRDIB=$(echo "$id" | sed 's/-//g' | cut -c3)
+  file="$SEPDIB/$SECDIB/$THIRDIB/$id/$id.flv"
+  if [ -f $file ]; then
+    hash=`$file"|awk '{print $1}'`
+    size=`du -b "$file"|awk '{print $1}'`
+    echo "Hash is $hash"
+    echo "ID is $id"
+    echo "USERNAME is $USERNAME"
+    echo "Size is $size"
+    askserver finishVid $id $size $hash
+  else
+    warning "Failed to download anything for $id."
+  fi
+  if [ -f STOP ]; then 
+    echo "$0: I see a file called STOP. Stopping."
+    exit 0
+  fi
 done

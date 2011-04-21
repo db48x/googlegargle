@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Search Google Videos for the search term and times specified below:
 # Separate muliple search terms with + i.e.: 'albert+einstein'

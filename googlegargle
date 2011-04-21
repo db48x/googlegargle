@@ -124,7 +124,7 @@ grab_by_id() {
          tid=`echo $line | sed -n -e 's/.*id="\([^"]*\)".*/\1/p'`
          name=`echo $line | sed -n -e 's/.*name="\([^"]*\)".*/\1/p'`
          lang=`echo $line | sed -n -e 's/.*lang_code="\([^"]*\)".*/\1/p'`
-         lang_name=`echo $line | sed -n -e 's/.*lang_original="\([^"]*\)".*/\1/p'`
+         lang_name=`echo $line | sed -n -e 's/.*lang_translated="\([^"]*\)".*/\1/p'`
          echo "Found $lang_name subtitle track $tid named $name"
          grab "$id.$tid.xml" "http://video.google.com/videotranscript?docid=$id&type=track&name=$name&lang=$lang"
        done) && break

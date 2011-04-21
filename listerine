@@ -8,12 +8,12 @@ SERVER=199.48.254.90:8081
 GARGLE=./googlegargle
 
 if [ -z $USERNAME ]; then
-    echo "You must edit the listerine script and add a username before you can begin"
+    echo "$0: You must edit the listerine script and add a username before you can begin">&2
     exit 1
 fi
 
 if [ ! -f $GARGLE ]; then
-    echo "Couldn't find googlegargle. Are you sure you cloned everything from the git repository?"
+    echo "$0: Couldn't find googlegargle. Are you sure you cloned everything from the git repository?">&2
     exit 2
 fi
 

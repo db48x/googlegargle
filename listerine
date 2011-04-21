@@ -39,7 +39,7 @@ askserver() {
   rest="$@" | tr " " "/"
   curl --silent "http://$SERVER/$1/$USERNAME/$rest"
   if [ $? ]; then
-    error "Couldn't contact the listerine server. Is your network down?"
+    error "Couldn't contact the listerine server. The listerine server could be down, or your network."
   fi
 }
 

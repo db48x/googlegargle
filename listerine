@@ -35,7 +35,7 @@ fi
 
 EXTERN_IP=`curl --silent ipv4.icanhazip.com` #Do not change without good reason, or underscor will eat your brains
 
-askserver() {
+tellserver() {
     cmd="$1"
     shift
     rest=
@@ -47,12 +47,26 @@ askserver() {
     fi
 }
 
-askserver introduce $EXTERN_IP
+askserver() {
+    var="$1"
+    cmd="$2"
+    shift 2
+    rest=
+    for chunk in "$@"; do
+        rest="$rest/$chunk"
+    done
+    export $var=`curl --silent --fail "http://$SERVER/$cmd/${USERNAME}$rest"`
+    if [ $? != 0 ]; then
+        error "Couldn't contact the listerine server. The listerine server could be down, or your network."
+    fi
+}
+
+tellserver introduce $EXTERN_IP
 
 while true; do
   echo "Getting an id from $SERVER, authenticated as $USERNAME with IP $EXTERN_IP"
-  id=`askserver getID`
-  if [ $? ]; then
+  askserver id getID
+  if [ $? != 0 ]; then
     error "The server didn't give us an id. This could mean the server is broken, or possibly that we're finished."
   fi
   if [ $(echo $id | grep "^[-0-9]*$") != $id ]; then
@@ -67,13 +81,13 @@ while true; do
   THIRDIB=$(echo "$id" | sed 's/-//g' | cut -c3)
   file="$SEPDIB/$SECDIB/$THIRDIB/$id/$id.flv"
   if [ -f $file ]; then
-    hash=`sha1sum $file"|awk '{print $1}'`
+    hash=`sha1sum "$file"|awk '{print $1}'`
     size=`du -b "$file"|awk '{print $1}'`
     echo "Hash is $hash"
     echo "ID is $id"
     echo "USERNAME is $USERNAME"
     echo "Size is $size"
-    askserver finishVid $id $size $hash
+    tellserver finishVid $id $size $hash
   else
     warning "Failed to download anything for $id."
   fi

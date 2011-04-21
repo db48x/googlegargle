@@ -36,13 +36,15 @@ fi
 EXTERN_IP=`curl --silent ipv4.icanhazip.com` #Do not change without good reason, or underscor will eat your brains
 
 askserver() {
-  cmd="$1"
-  shift 1
-  rest=$(echo "$@" | tr " " "/")
-  curl --silent --fail "http://$SERVER/$cmd/$USERNAME/$rest"
-  if [ $? ]; then
-    error "Couldn't contact the listerine server. The listerine server could be down, or your network."
-  fi
+    cmd="$1"
+    shift
+    rest=
+    for chunk in "$@"; do
+        rest="$rest/$chunk"
+    done
+    if ! curl --silent --fail "http://$SERVER/$cmd/${USERNAME}$rest"; then
+        error "Couldn't contact the listerine server. The listerine server could be down, or your network."
+    fi
 }
 
 askserver introduce $EXTERN_IP

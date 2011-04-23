@@ -11,7 +11,7 @@ grab() {
   $getCommand $getArgs "$1" "$2" || exit $?
 }
 
-iconv() {
+utf8() {
   iconv -f latin1 -t UTF-8 -o "$1"
 }
 
@@ -24,7 +24,7 @@ find -name '*html' | while read file; do
     rm "$xml"
   fi
   grab - "http://video.google.com/videotranscript?docid=$id&type=list" | "$xml"
-  iconv -f latin1 -t UTF-8 -- "$xml" | tr ">" "\n" | grep "^<track " | while read line; do
+  utf8 -f latin1 -t UTF-8 -- "$xml" | tr ">" "\n" | grep "^<track " | while read line; do
     tid=`echo $line | sed -n -e 's/.*id="\([^"]*\)".*/\1/p'`
     name=`echo $line | sed -n -e 's/.*name="\([^"]*\)".*/\1/p'`
     lang=`echo $line | sed -n -e 's/.*lang_code="\([^"]*\)".*/\1/p'`
@@ -34,6 +34,6 @@ find -name '*html' | while read file; do
     if [ -f $tfile ]; then
       rm "$tfile"
     fi
-    grab - "http://video.google.com/videotranscript?docid=$id&type=track&name=$name&lang=$lang" | iconv "$tfile"
+    grab - "http://video.google.com/videotranscript?docid=$id&type=track&name=$name&lang=$lang" | utf8 "$tfile"
   done
 done

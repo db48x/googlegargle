@@ -21,7 +21,7 @@ find -name '*html' | while read file; do
   xml="$id.xml"
   cd $dir
   if [ -f $xml ]; then
-    rm "$xml"
+    rm "./$xml"
   fi
   grab - "http://video.google.com/videotranscript?docid=$id&type=list" | utf8 "$xml"
   cat -- "$xml" | tr ">" "\n" | grep "^<track " | while read line; do
@@ -32,7 +32,7 @@ find -name '*html' | while read file; do
     echo "Found $lang_name subtitle track $tid named $name..."
     tfile="$id.$tid.xml"
     if [ -f $tfile ]; then
-      rm "$tfile"
+      rm "./$tfile"
     fi
     grab - "http://video.google.com/videotranscript?docid=$id&type=track&name=$name&lang=$lang" | utf8 "$tfile"
   done

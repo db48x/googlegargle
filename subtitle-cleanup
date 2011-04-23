@@ -1,0 +1,39 @@
+#!/bin/bash
+
+HOMEBASE=$(pwd)
+__exists () {
+      which $1 >/dev/null 2>&1;
+}
+__exists wget && getCommand="wget" && getArgs="-O"
+__exists fetch && getCommand="fetch" && getArgs="-o"
+
+grab() {
+  $getCommand $getArgs "$1" "$2" || exit $?
+}
+
+iconv() {
+  iconv -f latin1 -t UTF-8 -o "$1"
+}
+
+find -name '*html' | while read file; do
+  id=`echo $file | sed -e 's/.*\/\([-0-9]*\)*.html/\1/'`
+  dir=`dirname $file`
+  xml="$id.xml"
+  cd $dir
+  if [ -f $xml ]; then
+    rm "$xml"
+  fi
+  grab - "http://video.google.com/videotranscript?docid=$id&type=list" | "$xml"
+  iconv -f latin1 -t UTF-8 -- "$xml" | tr ">" "\n" | grep "^<track " | while read line; do
+    tid=`echo $line | sed -n -e 's/.*id="\([^"]*\)".*/\1/p'`
+    name=`echo $line | sed -n -e 's/.*name="\([^"]*\)".*/\1/p'`
+    lang=`echo $line | sed -n -e 's/.*lang_code="\([^"]*\)".*/\1/p'`
+    lang_name=`echo $line | sed -n -e 's/.*lang_translated="\([^"]*\)".*/\1/p'`
+    echo "Found $lang_name subtitle track $tid named $name..."
+    tfile="$id.$tid.xml"
+    if [ -f $tfile ]; then
+      rm "$tfile"
+    fi
+    grab - "http://video.google.com/videotranscript?docid=$id&type=track&name=$name&lang=$lang" | iconv "$tfile"
+  done
+done

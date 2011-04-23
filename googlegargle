@@ -50,12 +50,17 @@ require() {
   $* || exit $?
 }
 
+#I hate shell scripting
 grab() {
-  require $getCommand $getArgs $*
+  $getCommand $getArgs "$1" "$2" || exit $?
 }
 
 aria() {
   require $ARIA $ARIAOPTIONS -o $*
+}
+
+utf8() {
+  iconv -f latin1 -t UTF-8 -o "$1"
 }
 
 grab_by_id() {
@@ -118,15 +123,18 @@ grab_by_id() {
       (grab "$id.html" "http://video.google.com/videoplay?docid=$id"
        grep -- "video-title>" "$id.html" | cut -f2 -d">" | cut -f1 -d"<"
        aria $id.flv "$($DLSCRIPT -g http://video.google.com/videoplay?docid=$id)"
-       grab "$id.xml" "http://video.google.com/videotranscript?docid=$id&type=list"
-       cat -- "$id.xml" | tr ">" "\n" | grep "$<track " | while read line; do
-         echo $line
+       grab - "http://video.google.com/videotranscript?docid=$id&type=list" | utf8 "$id.xml"
+       cat -- "$id.xml" | tr ">" "\n" | grep "^<track " | while read line; do
          tid=`echo $line | sed -n -e 's/.*id="\([^"]*\)".*/\1/p'`
          name=`echo $line | sed -n -e 's/.*name="\([^"]*\)".*/\1/p'`
          lang=`echo $line | sed -n -e 's/.*lang_code="\([^"]*\)".*/\1/p'`
          lang_name=`echo $line | sed -n -e 's/.*lang_translated="\([^"]*\)".*/\1/p'`
-         echo "Found $lang_name subtitle track $tid named $name"
-         grab "$id.$tid.xml" "http://video.google.com/videotranscript?docid=$id&type=track&name=$name&lang=$lang"
+         echo "Found $lang_name subtitle track $tid named $name..."
+         tfile="$id.$tid.xml"
+         if [ -f $tfile ]; then
+           rm "$tfile"
+         fi
+         grab - "http://video.google.com/videotranscript?docid=$id&type=track&name=$name&lang=$lang" | utf8 "$tfile"
        done) && break
       if [ $retry_time -gt 32 ]; then
         echo "Too many errors on $id, giving up on this one."

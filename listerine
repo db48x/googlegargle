@@ -67,7 +67,7 @@ while true; do
   THIRDIB=$(echo "$id" | sed 's/-//g' | cut -c3)
   file="$SEPDIB/$SECDIB/$THIRDIB/$id/$id.flv"
   if [ -f $file ]; then
-    hash=`sha1sum $file"|awk '{print $1}'`
+    hash=`sha1sum "$file"|awk '{print $1}'`
     size=`du -b "$file"|awk '{print $1}'`
     echo "Hash is $hash"
     echo "ID is $id"

@@ -36,4 +36,6 @@ find -name '*html' | while read file; do
     fi
     grab - "http://video.google.com/videotranscript?docid=$id&type=track&name=$name&lang=$lang" | utf8 "$tfile"
   done
+  cd $HOMEBASE
+  sleep 1
 done
